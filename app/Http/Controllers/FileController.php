@@ -126,10 +126,14 @@ class FileController extends Controller
     }
 
     public function search(Request $request){
-        $result = File::whereRaw('MATCH (content) AGAINST (?)' , array([$request->term]))->get('content');
+        $result = File::whereRaw('MATCH (content) AGAINST (?)' , array([$request->term]))
+            ->where('file_id',File::max('file_id'))
+            ->get('content');
 
         if (!count($result)) {
-            $result = File::where('content','like','%'.$request->term.'%')->get('content');
+            $result = File::where('content','like','%'.$request->term.'%')
+                ->where('file_id',File::max('file_id'))
+                ->get('content');
         }        
         if (!count($result)) {
             return response()->json(['status'=> 0, 'data'=> [], 'message'=>'No results found']);

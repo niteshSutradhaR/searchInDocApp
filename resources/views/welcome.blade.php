@@ -38,7 +38,6 @@
         <div class="modal-dialog">
             <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title text-primary" id="exampleModalLabel">Info:</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -53,6 +52,8 @@
         <script src="https://code.jquery.com/jquery-3.6.3.min.js"></script>
         <script>
             $(function(){
+                var is_file_uploaded = 0;
+
                 $("#upload_file").click(function(){
                     var files = $('#form_file')[0].files;
                     var token = $("[name='_token']").val();
@@ -68,6 +69,7 @@
                             processData: false,
                             dataType: 'json',
                             success: function(response){
+                                is_file_uploaded = 1;
                                 $("#exampleModal").modal('toggle');
                                 $("#exampleModal .modal-body").html(response.message);
                                 $('#form_file').val('');
@@ -79,37 +81,43 @@
                 $("#search").on('click',function(){
                     var term = $('#term').val();
                     var token = $("[name='_token']").val();
-                    $.ajax({
-                        url: "{{route('search')}}",
-                        method: 'get',
-                        data: {'term':term},
-                        indexTerm: {'term':term},
-                        dataType: 'json',
-                        success: function(response){
-                                $("#search_results").html('');
-                            if (response.data.length) { 
-                                $("#search_results").append('<div class="col-md-12"><h5>Search List</h5></div>'); 
-                                let term = this.indexTerm.term;                                
-                                response.data.forEach(element => {
-                                    let content = element.content;
-                                    let pos = content.toUpperCase().indexOf(term.toUpperCase());
-                                    var output = [element.content.slice(0, pos + term.length), '</span>', element.content.slice(pos + term.length)].join('');
-                                    output = [output.slice(0, pos), '<span class="text-danger bg-warning">', output.slice(pos)].join('');
-                                    
-                                    while(pos > -1) {
-                                        pos = output.toUpperCase().indexOf(term.toUpperCase(), pos+term.length+45);
-
-                                        output = [output.slice(0, pos + term.length), '</span>', output.slice(pos + term.length)].join('');
+                    if (is_file_uploaded) {
+                        $.ajax({
+                            url: "{{route('search')}}",
+                            method: 'get',
+                            data: {'term':term},
+                            indexTerm: {'term':term},
+                            dataType: 'json',
+                            success: function(response){
+                                    $("#search_results").html('');
+                                if (response.data.length) { 
+                                    $("#search_results").append('<div class="col-md-12"><h5>Search List</h5></div>'); 
+                                    let term = this.indexTerm.term;                                
+                                    response.data.forEach(element => {
+                                        let content = element.content;
+                                        let pos = content.toUpperCase().indexOf(term.toUpperCase());
+                                        var output = [element.content.slice(0, pos + term.length), '</span>', element.content.slice(pos + term.length)].join('');
                                         output = [output.slice(0, pos), '<span class="text-danger bg-warning">', output.slice(pos)].join('');
-                                    }
-                                    $("#search_results").append('<div class="col-md-12 pb-3">'+output+'</div>');
-                                });
+                                        
+                                        while(pos > -1) {
+                                            pos = output.toUpperCase().indexOf(term.toUpperCase(), pos+term.length+45);
+
+                                            output = [output.slice(0, pos + term.length), '</span>', output.slice(pos + term.length)].join('');
+                                            output = [output.slice(0, pos), '<span class="text-danger bg-warning">', output.slice(pos)].join('');
+                                        }
+                                        $("#search_results").append('<div class="col-md-12 pb-3">'+output+'</div>');
+                                    });
+                                }
+                                else {
+                                    $("#search_results").html('<div class="col-md-12"><h5>'+response.message+'</h5></div>');
+                                } 
                             }
-                            else {
-                                $("#search_results").html('<div class="col-md-12"><h5>'+response.message+'</h5></div>');
-                            } 
-                        }
-                    });
+                        });
+                    }
+                    else{
+                        $("#exampleModal").modal('toggle');
+                        $("#exampleModal .modal-body").html("<h6 class='text-danger text-center'>Upload a document</h6>");
+                    }
                 });
             })
         </script>
